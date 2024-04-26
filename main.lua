@@ -1,6 +1,7 @@
 EIDD = RegisterMod("EID Duplicate", 1)
 local game = Game()
 
+EIDD.RGON = REPENTOGON
 EIDD.descriptionColor = "{{ColorYellow}}"
 
 include("eidd.baseItemDesc")
@@ -35,7 +36,7 @@ end
 ---Checks whether there are two items on the floor, or the possiblity of getting two of the same item
 ---@param obj any The descObj provided by EID, contains all information about the entity that is described
 ---@return boolean? doDuplicate If the description should contain a description for duplicates
-function HasItem(obj)
+local function HasItem(obj)
     -- Make sure obj is an item
     if obj ~= nil and obj.ObjType == EntityType.ENTITY_PICKUP and obj.ObjVariant == PickupVariant.PICKUP_COLLECTIBLE then
 
@@ -45,21 +46,23 @@ function HasItem(obj)
             return true
         end
 
-        local playerCount = game:GetNumPlayers()
-        -- Loop through players
-        for playerIndex = 0, playerCount - 1 do
-            local player = Isaac.GetPlayer(playerIndex)
-            -- Has the item already and another is in the room 
-            -- OR has the item and another exists on the floor
-            local playerCollectibleNum = player:GetCollectibleNum(obj.ObjSubType)
-            if (playerCollectibleNum > 0 and obj.Entity ~= nil) or (playerCollectibleNum + floorCollectibleNum >= 2) then
-                return true
-            end
-            -- Has Diplopia or Crooked Penny
-            for slot = ActiveSlot.SLOT_PRIMARY, ActiveSlot.SLOT_POCKET2 do
-                local activeItem = player:GetActiveItem(slot)
-                if activeItem == CollectibleType.COLLECTIBLE_DIPLOPIA or activeItem == CollectibleType.COLLECTIBLE_CROOKED_PENNY then
+        if obj.Entity ~= nil then
+            local playerCount = game:GetNumPlayers()
+            -- Loop through players
+            for playerIndex = 0, playerCount - 1 do
+                local player = Isaac.GetPlayer(playerIndex)
+                -- Has the item already and another is in the room 
+                -- OR has the item and another exists on the floor
+                local playerCollectibleNum = player:GetCollectibleNum(obj.ObjSubType)
+                if playerCollectibleNum > 0 or (playerCollectibleNum + floorCollectibleNum >= 2) then
                     return true
+                end
+                -- Has Diplopia or Crooked Penny
+                for slot = ActiveSlot.SLOT_PRIMARY, ActiveSlot.SLOT_POCKET2 do
+                    local activeItem = player:GetActiveItem(slot)
+                    if activeItem == CollectibleType.COLLECTIBLE_DIPLOPIA or activeItem == CollectibleType.COLLECTIBLE_CROOKED_PENNY then
+                        return true
+                    end
                 end
             end
         end
@@ -69,7 +72,7 @@ end
 ---Adds the duplicate description to the currect description
 ---@param obj any The descObj provided by EID, contains all information about the entity that is described
 ---@return any descObj The complete description
-function AddDescription(obj)
+local function AddDescription(obj)
     -- Make sure the object has an entry in the description list
     if EIDD.duplicationDescList[obj.ObjSubType] ~= nil and EIDD.duplicationDescList[obj.ObjSubType] ~= "" then
         local desc = ""
@@ -109,7 +112,7 @@ function EIDD:Init()
     print("EIDD LOADED")
 end
 
-if REPENTOGON then
+if EIDD.RGON then
     EIDD:AddCallback(ModCallbacks.MC_POST_MODS_LOADED, EIDD.Init)
 else
     EIDD:Init()
