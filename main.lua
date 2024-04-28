@@ -46,17 +46,20 @@ local function HasItem(obj)
             return true
         end
 
-        if obj.Entity ~= nil then
-            local playerCount = game:GetNumPlayers()
-            -- Loop through players
-            for playerIndex = 0, playerCount - 1 do
-                local player = Isaac.GetPlayer(playerIndex)
-                -- Has the item already and another is in the room 
-                -- OR has the item and another exists on the floor
-                local playerCollectibleNum = player:GetCollectibleNum(obj.ObjSubType)
-                if playerCollectibleNum > 0 or (playerCollectibleNum + floorCollectibleNum >= 2) then
-                    return true
-                end
+        local playerCount = game:GetNumPlayers()
+        -- Loop through players
+        for playerIndex = 0, playerCount - 1 do
+            local player = Isaac.GetPlayer(playerIndex)
+            local playerCollectibleNum = player:GetCollectibleNum(obj.ObjSubType)
+
+            -- Has the item and another exists on the floor
+            -- OR Has the item already and another is in the room 
+            if playerCollectibleNum > 0 or (playerCollectibleNum + floorCollectibleNum) >= 2 then
+                return true
+            end
+
+            -- Don't display on item reminder
+            if obj.Entity ~= nil then
                 -- Has Diplopia or Crooked Penny
                 for slot = ActiveSlot.SLOT_PRIMARY, ActiveSlot.SLOT_POCKET2 do
                     local activeItem = player:GetActiveItem(slot)
@@ -79,19 +82,10 @@ local function AddDescription(obj)
         if type(EIDD.duplicationDescList[obj.ObjSubType]) == "table" then
             -- Handle multi-character descriptions
             local entityPos = obj.Entity.Position
-            local playerCount = game:GetNumPlayers()
 
             -- Find the nearest player to the item
-            local nearestPlayer = Isaac.GetPlayer()
-            local nearestDistance = math.maxinteger
-            for playerIndex = 0, playerCount - 1 do
-                local player = Isaac.GetPlayer(playerIndex)
-                local distance = player.Position:Distance(entityPos)
-                if distance < nearestDistance then
-                    nearestPlayer = player
-                    nearestDistance = distance
-                end
-            end
+            local nearestPlayer = game:GetNearestPlayer(entityPos)
+
             -- Multi-character duplication description
             desc = EIDD.duplicationDescList[obj.ObjSubType][nearestPlayer.SubType]
         else
